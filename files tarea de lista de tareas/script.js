@@ -1,9 +1,23 @@
 // 1. Estado: un arreglo de objetos con las tareas
-let tasks = [
+
+// Tareas que se muestran solo la primera vez (guardamos como texto para el [local storage])
+// 1. Estado
+const defaultTasks = [
   { text: "Welcome to the todo app!", done: false },
   { text: "Esto es una lista de tareas", done: false },
-  { text: "Tiene contadores", done: true }   // al menos una completada
+  { text: "Tiene contadores", done: true }
 ];
+
+function loadTasks() {
+  const saved = localStorage.getItem("tasks");
+  return saved ? JSON.parse(saved) : defaultTasks;
+}
+
+function saveTasks() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+let tasks = loadTasks();
 
 // 2. Referencias al HTML
 const input = document.getElementById("task-input");
@@ -26,7 +40,7 @@ function render() {
 
     const text = document.createElement("span");
     text.className = "task__text";
-    text.textContent = task.text;       // textContent evita inyectar HTML
+    text.textContent = task.text;
     text.title = "Doble clic para editar";
     text.ondblclick = () => editTask(i, li, text);
 
@@ -40,9 +54,10 @@ function render() {
     list.appendChild(li);
   });
   updateCounters();
+  saveTasks();          // guarda después de cada cambio
 }
 
-// 4. Editar: cambia el texto por un input
+// 4. Editar
 function editTask(i, li, textEl) {
   const edit = document.createElement("input");
   edit.className = "task__edit";
@@ -70,7 +85,7 @@ function addTask() {
 addBtn.onclick = addTask;
 input.onkeydown = e => { if (e.key === "Enter") addTask(); };
 
-// 6. Contadores
+// 6. Contadores (solo contadores)
 function updateCounters() {
   const done = tasks.filter(t => t.done).length;
   document.getElementById("total").textContent = "Total: " + tasks.length;
@@ -78,11 +93,18 @@ function updateCounters() {
   document.getElementById("incompleted").textContent = "Incompleted: " + (tasks.length - done);
 }
 
-// 7. Tema claro/oscuro (usa el del sistema al inicio)
+// 7. Tema claro/oscuro (recuerda tu elección)
 const root = document.documentElement;
-if (window.matchMedia("(prefers-color-scheme: light)").matches) root.dataset.theme = "light";
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme) {
+  root.dataset.theme = savedTheme;
+} else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+  root.dataset.theme = "light";
+}
 document.getElementById("theme-toggle").onclick = () => {
-  root.dataset.theme = root.dataset.theme === "light" ? "dark" : "light";
+  const next = root.dataset.theme === "light" ? "dark" : "light";
+  root.dataset.theme = next;
+  localStorage.setItem("theme", next);
 };
 
 render();
